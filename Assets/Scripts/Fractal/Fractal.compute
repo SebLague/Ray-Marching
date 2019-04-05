@@ -1,4 +1,4 @@
-﻿#pragma kernel CSMain
+#pragma kernel CSMain
 
 RWTexture2D<float4> Destination;
 
@@ -14,6 +14,7 @@ float3 colourBMix;
 
 static const float epsilon = 0.001f;
 static const float maxDst = 200;
+static const int maxStepCount = 250;
 
 struct Ray {
     float3 origin;
@@ -92,7 +93,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float rayDst = 0;
     int marchSteps = 0;
 
-    while (rayDst < maxDst) {
+    while (rayDst < maxDst && marchSteps < maxStepCount) {
         marchSteps ++;
         float2 sceneInfo = SceneInfo(ray.origin);
         float dst = sceneInfo.y;
@@ -102,7 +103,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             float escapeIterations = sceneInfo.x;
             float3 normal = EstimateNormal(ray.origin-ray.direction*epsilon*2);
 
-            float colourA = saturate(dot(float4(normal*.5+.5, 1),-_LightDirection));
+            float colourA = saturate(dot(normal*.5+.5,-_LightDirection));
             float colourB = saturate(escapeIterations/16.0);
             float3 colourMix = saturate(colourA * colourAMix + colourB * colourBMix);
 
