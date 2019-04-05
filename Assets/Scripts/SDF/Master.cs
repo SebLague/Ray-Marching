@@ -1,6 +1,4 @@
-﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
@@ -9,13 +7,12 @@ public class Master : MonoBehaviour {
 
     RenderTexture target;
     Camera cam;
-    Light light;
+    Light lightSource;
     List<ComputeBuffer> buffersToDispose;
-    public string debug;
 
     void Init () {
         cam = Camera.current;
-        light = FindObjectOfType<Light> ();
+        lightSource = FindObjectOfType<Light> ();
     }
 
 
@@ -42,7 +39,6 @@ public class Master : MonoBehaviour {
     }
 
     void CreateScene () {
-        debug = "";
         List<Shape> allShapes = new List<Shape> (FindObjectsOfType<Shape> ());
         allShapes.Sort ((a, b) => a.operation.CompareTo (b.operation));
 
@@ -53,7 +49,6 @@ public class Master : MonoBehaviour {
             if (allShapes[i].transform.parent == null) {
 
                 Transform parentShape = allShapes[i].transform;
-                debug += parentShape.name + " (" + parentShape.childCount + "): ";
                 orderedShapes.Add (allShapes[i]);
                 allShapes[i].numChildren = parentShape.childCount;
                 // Add all children of the shape (nested children not supported currently)
@@ -61,7 +56,6 @@ public class Master : MonoBehaviour {
                     if (parentShape.GetChild (j).GetComponent<Shape> () != null) {
                         orderedShapes.Add (parentShape.GetChild (j).GetComponent<Shape> ());
                         orderedShapes[orderedShapes.Count - 1].numChildren = 0;
-                        debug += orderedShapes[orderedShapes.Count - 1].transform.name + ", ";
                     }
                 }
             }
@@ -91,10 +85,10 @@ public class Master : MonoBehaviour {
     }
 
     void SetParameters () {
-        bool lightIsDirectional = light.type == LightType.Directional;
+        bool lightIsDirectional = lightSource.type == LightType.Directional;
         raymarching.SetMatrix ("_CameraToWorld", cam.cameraToWorldMatrix);
         raymarching.SetMatrix ("_CameraInverseProjection", cam.projectionMatrix.inverse);
-        raymarching.SetVector ("_Light", (lightIsDirectional) ? light.transform.forward : light.transform.position);
+        raymarching.SetVector ("_Light", (lightIsDirectional) ? lightSource.transform.forward : lightSource.transform.position);
         raymarching.SetBool ("positionLight", !lightIsDirectional);
     }
 
